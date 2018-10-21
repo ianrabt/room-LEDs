@@ -1,44 +1,121 @@
-﻿#include "Animation.h"
+#include "Timing.h"
+#include "Animation.h"
 #include "Constants.h"
-#include "LPD8806.h"
+#include "LPD8806_wrapper.h"
 
 #include "SPI.h" // Comment out this line if using Trinket or Gemma
 #ifdef __AVR_ATtiny85__
 #include <avr/power.h>
 #endif
 
-// Example to control LPD8806-based RGB LED Modules in a strip
+/************************************************
+ * Variables
+ ************************************************/
 
-/*****************************************************************************/
+LPD8806 strip;
 
-// First parameter is the number of LEDs in the strand.  The LED strips
-// are 32 LEDs per meter but you can extend or cut the strip.  Next two
-// parameters are SPI data and clock pins:
-LPD8806 strip = LPD8806(nLEDs, dataPin, clockPin);
+volatile unsigned long lastInteruptTime; // initialized in setup
+volatile unsigned long deltaInteruptTime = 0;
+volatile bool timesUpdated = false;
 
-// You can optionally use hardware SPI for faster writes, just leave out
-// the data and clock pin parameters.  But this does limit use to very
-// specific pins on the Arduino.  For "classic" Arduinos (Uno, Duemilanove,
-// etc.), data = pin 11, clock = pin 13.  For Arduino Mega, data = pin 51,
-// clock = pin 52.  For 32u4 Breakout Board+ and Teensy, data = pin B2,
-// clock = pin B1.  For Leonardo, this can ONLY be done on the ICSP pins.
-//LPD8806 strip = LPD8806(nLEDs);
+unsigned long lastLoopTime; // initialized in setup
 
-void setup() {
+AnimationClass *animation;
+Timer *timer;
+
+
+/************************************************
+ * Functions
+ ************************************************/
+
+void setup() { 
 #if defined(__AVR_ATtiny85__) && (F_CPU == 16000000L)
 	clock_prescale_set(clock_div_1); // Enable 16 MHz on Trinket
 #endif
 
-									 // Start up the LED strip
+	/* Init the LED strip */
+
+	// You can optionally use hardware SPI for faster writes, just leave out
+	// the data and clock pin parameters.  But this does limit use to very
+	// specific pins on the Arduino.  For "classic" Arduinos (Uno, Duemilanove,
+	// etc.), data = pin 11, clock = pin 13.  For Arduino Mega, data = pin 51,
+	// clock = pin 52.  For 32u4 Breakout Board+ and Teensy, data = pin B2,
+	// clock = pin B1.  For Leonardo, this can ONLY be done on the ICSP pins.
+
+#ifdef ARDUINO_AVR_UNO
+	if(dataPin == 11 && clockPin == 13)
+		strip = LPD8806(nLEDs);
+	else
+#endif
+		strip = LPD8806(nLEDs, dataPin, clockPin);
+
+	// Start up the LED strip
 	strip.begin();
 
 	// Update the strip, to start they are all 'off'
 	strip.show();
+
+	// create the animation
+	animation = new TheaterChase(&strip, strip.Color(127, 127, 127));
+
+
+	/* Init the HAL effect sensor */
+
+	pinMode(interuptPin, INPUT_PULLUP);
+	attachInterrupt(digitalPinToInterrupt(interuptPin), HAL_interupt, RISING);
+	lastInteruptTime = millis();
+
+
+	/* Init the debug LED */
+
+	pinMode(debugPin, OUTPUT);
+	// we will set the led to be off initially (until we get the HAL effect up and
+	// running)
+	digitalWrite(debugPin, HIGH);
+
+
+	/* Misc. */
+	lastLoopTime = millis();
+	//timer = new Timer();
+
+	/* Debug */
+#if(DEBUG == true)
+
+#endif
+}
+
+void HAL_interupt() {
+	unsigned long newTime = millis();
+	deltaInteruptTime = newTime - lastInteruptTime;
+	lastInteruptTime = newTime;
+
+	// now we wait for loop to pick up on this flag and calculate a new speed
+	timesUpdated = true;
 }
 
 
-	void loop() {
+void loop() {
+	/* this is run every time the HAL effect has passed a magnet on the wheel */
+	if (timesUpdated) {
+		timesUpdated = false;
 
+		// TODO call timer code
+
+		// now we toggle the debug LED to indicate that an interupt has occured
+		digitalWrite(debugPin, !digitalRead(debugPin));
+	}
+
+	// for speed, we assume that millis has not overflowed (ie the program has not
+	// been runing for >50 days (a reasonable assumption)
+	unsigned long newTime = millis();
+	unsigned long deltaLoopTime = newTime - lastLoopTime;
+	lastLoopTime = newTime;
+
+	//double offset = LED_offset((unsigned int)deltaLoopTime);
+	//animation->update(0, (unsigned int)deltaLoopTime);
+
+
+	/*
 	// Send a simple pixel chase in...
 	colorChase(strip.Color(127, 127, 127), 50); // White
 	colorChase(strip.Color(127, 0, 0), 50); // Red
@@ -60,13 +137,16 @@ void setup() {
 												// Fill the entire strip with...
 	colorWipe(strip.Color(127, 0, 0), 50);  // Red
 	colorWipe(strip.Color(0, 127, 0), 50);  // Green
-	colorWipe(strip.Color(0, 0, 127), 50);  // Blue
+	colorWipe(strip.Color(0, 0, 127), 50	);  // Blue
 
 	rainbow(10);
 	
 	rainbowCycle(0);  // make it go through the cycle fairly fast
 	
-	//theaterChaseRainbow(50);
+	theaterChaseRainbow(50);
+	*/
+	rainbowCycle(0);
+	//theaterChase(strip.Color(127, 5, 5), 50);
 }
 
 void rainbow(uint8_t wait) {
@@ -191,3 +271,4 @@ uint32_t Wheel(uint16_t WheelPos)
 	}
 	return(strip.Color(r, g, b));
 }
+

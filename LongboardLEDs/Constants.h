@@ -2,30 +2,68 @@
 #define _CONSTANTS_h
 
 #if defined(ARDUINO) && ARDUINO >= 100
-#include "arduino.h"
+#include "Arduino.h"
 #else
 #include "WProgram.h"
 #endif
 
-// Number of RGB LEDs in strand:
-const int nLEDs = 32;
+/*
+ * This can be considered the main configuration file for this program. Set
+ * the following values based on how the longboard and Arduino are configured.
+ */
 
-// Chose 2 pins for output; can be any valid output pins:
-const int dataPin = 2;
-const int clockPin = 3;
+/************************************************
+ * Options
+ ************************************************/
+
+#define DEBUG true
+
+/************************************************
+ * Pins
+ ************************************************/
+
+// Choose 2 pins for output; can be any valid output pins:
+const byte dataPin = 4;
+const byte clockPin = 5;
+
+// The pin where the HAL effect sensor's output is connected
+const byte interuptPin = 2;
+
+// debug LED pin
+const byte debugPin = LED_BUILTIN;
+
+/************************************************
+ * Distances
+ ************************************************/
 
 // distance between LEDs in cm
-const int spacing = 0;
+const double spacing = 3.125;
+
+// Number of RGB LEDs in strand:
+const uint16_t nLEDs = 32;
 
 // length of the LED strip in cm
-const int stripLength = spacing * nLEDs;
+const double stripLength = nLEDs * spacing;
 
-// radius of the wheel in cm
-const int radius = 1;
+// diameter of the wheel in cm
+const double diameter = 7.0;
+
 // circumference of the wheel in cm
-const int circumference = TWO_PI * radius;
+const double circumference = PI * diameter;
+
+/************************************************
+ * Timing
+ ************************************************/
 
 // number of HAL Effect Sensors on the wheel (we assume they are all equally spaced)
-const unsigned int nHAL = 1;
+const byte nHAL = 1;
+
+// the number of previous times differences to keep track of and average
+// together when calculating the longboard speed.
+const byte numSamples = 3;
+
+// if an interupt does not occur after this amount of time (in miliseconds)
+// then we assume the board is not moving (and reset the speed)
+const unsigned long maxWaitTime = 10000UL;
 
 #endif
