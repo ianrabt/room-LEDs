@@ -1,5 +1,6 @@
 #include "Timing.h"
 #include "Animation.h"
+#include <LiquidCrystal.h>
 #include "Constants.h"
 #include "LPD8806.h"
 
@@ -13,6 +14,8 @@
  ************************************************/
 
 LPD8806* strip;
+//LiquidCrystal lcd(8, 9, 4, 5, 6, 7);           // select the pins used on the LCD panel
+LiquidCrystal lcd(8,9,4,5,6,7);
 
 volatile unsigned long lastInteruptTime; // initialized in setup
 volatile unsigned long deltaInteruptTime = 0;
@@ -48,6 +51,10 @@ void setup() {
 	else
 #endif
 		strip = new LPD8806(nLEDs, dataPin, clockPin);
+
+	lcd.begin(16, 2);               // start the library
+	lcd.setCursor(0,0);             // set the LCD cursor   position 
+	lcd.print("Push the buttons");  // print a simple message on the LCD
 
 	// Start up the LED strip
 	strip->begin();

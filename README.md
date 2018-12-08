@@ -8,4 +8,7 @@ TODO
 
 ## Dependancies
 
-Depends on the [LPD8806 Arduino Library](https://github.com/adafruit/LPD8806).
+Depends on:
+
+- [LPD8806 Arduino Library](https://github.com/adafruit/LPD8806)
+- []()

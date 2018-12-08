@@ -23,8 +23,8 @@
  ************************************************/
 
 // Choose 2 pins for output; can be any valid output pins:
-const byte dataPin = 4;
-const byte clockPin = 5;
+const byte dataPin = 1;
+const byte clockPin = 3;
 
 // The pin where the HAL effect sensor's output is connected
 const byte interuptPin = 2;
